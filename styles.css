@@ -1,0 +1,209 @@
+/* Reset rapide */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Courier New', Courier, monospace;
+  background: #0a0a0a;
+  color: #00ffea;
+  text-align: center;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Effet de scan vertical (comme terminal futuriste) */
+body::before {
+  content: '';
+  position: fixed;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  background: linear-gradient(180deg, rgba(0,255,234,0.05) 0%, rgba(0,255,234,0) 50%, rgba(0,255,234,0.05) 100%);
+  animation: scan 3s linear infinite;
+  pointer-events: none;
+}
+
+/* Titre néon */
+h1 {
+  font-size: 2.5em;
+  margin-bottom: 30px;
+  text-shadow: 0 0 10px #00ffea, 0 0 20px #00ffea;
+  animation: neonGlow 1.5s infinite alternate;
+}
+
+/* Messages container */
+#messages {
+  border: 2px solid #00ffea;
+  background: rgba(0,0,0,0.7);
+  padding: 15px;
+  height: 300px;
+  width: 90%;
+  max-width: 600px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px #00ffea40, 0 0 40px #00ffea20 inset;
+}
+
+/* Chaque message */
+.message {
+  margin: 5px 0;
+  padding: 8px 12px;
+  border-radius: 5px;
+  background: rgba(0,255,234,0.05);
+  border-left: 3px solid #00ffea;
+  animation: messageAppear 0.5s ease;
+  color: #00ffea;
+  text-shadow: 0 0 5px #00ffea;
+  font-size: 0.95em;
+}
+
+/* Inputs et boutons */
+input, button {
+  padding: 12px 15px;
+  margin: 5px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1em;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+input {
+  width: 200px;
+  background: rgba(0,255,234,0.05);
+  color: #00ffea;
+  border: 1px solid #00ffea;
+}
+
+input::placeholder {
+  color: #00ffea88;
+}
+
+input:focus {
+  background: rgba(0,255,234,0.1);
+  box-shadow: 0 0 10px #00ffea;
+}
+
+button {
+  background: #00ffea;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00ffea;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #00ffea;
+}
+
+/* Animations */
+@keyframes messageAppear {
+  0% {opacity: 0; transform: translateX(-20px);}
+  100% {opacity: 1; transform: translateX(0);}
+}
+
+@keyframes neonGlow {
+  0% {text-shadow: 0 0 5px #00ffea, 0 0 10px #00ffea;}
+  50% {text-shadow: 0 0 20px #00ffea, 0 0 30px #00ffea;}
+  100% {text-shadow: 0 0 5px #00ffea, 0 0 10px #00ffea;}
+}
+
+@keyframes scan {
+  0% {top: -100%;}
+  100% {top: 0%;}
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  #messages {
+    height: 250px;
+  }
+
+  input {
+    width: 150px;
+  }
+}
+
+/* === DASHBOARD === */
+h2 {
+  margin-top: 40px;
+  font-size: 2em;
+  color: #00ffea;
+  text-shadow: 0 0 8px #00ffea;
+}
+
+/* Container des cartes */
+#dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  width: 90%;
+  max-width: 1000px;
+  margin-top: 20px;
+}
+
+/* Carte capteur */
+.card {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid #00ffea;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 0 15px #00ffea40;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: cardAppear 0.6s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 25px #00ffea80;
+}
+
+.card h3 {
+  color: #00ffea;
+  margin-bottom: 10px;
+  text-shadow: 0 0 5px #00ffea;
+}
+
+.card .value {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 10px #00ffea;
+  margin-bottom: 10px;
+}
+
+/* Historique */
+.history {
+  background: rgba(0,255,234,0.05);
+  border: 1px solid #00ffea30;
+  border-radius: 5px;
+  padding: 5px;
+  max-height: 80px;
+  overflow-y: auto;
+  font-size: 0.8em;
+  color: #00ffea;
+  text-align: left;
+}
+
+.history div {
+  padding: 2px 4px;
+  border-bottom: 1px solid #00ffea20;
+}
+
+/* Animations */
+@keyframes cardAppear {
+  0% {opacity: 0; transform: scale(0.95);}
+  100% {opacity: 1; transform: scale(1);}
+}

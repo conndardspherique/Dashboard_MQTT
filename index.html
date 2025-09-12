@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard MQTT</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/mqttws31.min.js"></script>
+</head>
+<body>
+  <h1>Dashboard MQTT</h1>
+
+  <!-- Zone Chat -->
+  <div id="messages"></div>
+  <div class="chat-controls">
+    <input id="topic" type="text" placeholder="Topic (ex: test)">
+    <input id="message" type="text" placeholder="Message">
+    <button onclick="sendMessage()">Envoyer</button>
+  </div>
+
+  <!-- Zone Dashboard -->
+  <h2>Capteurs en temps réel</h2>
+  <div id="dashboard">
+    <div class="card" id="temp-card">
+      <h3>🌡 Température</h3>
+      <p class="value" id="temp-value">-- °C</p>
+      <div class="history" id="temp-history"></div>
+    </div>
+    <div class="card" id="opr-card">
+      <h3>⚡ OPR</h3>
+      <p class="value" id="opr-value">-- mV</p>
+      <div class="history" id="opr-history"></div>
+    </div>
+    <div class="card" id="ph-card">
+      <h3>🧪 pH</h3>
+      <p class="value" id="ph-value">--</p>
+      <div class="history" id="ph-history"></div>
+    </div>
+    <div class="card" id="cond-card">
+      <h3>🌊 Conductivité</h3>
+      <p class="value" id="cond-value">-- µS</p>
+      <div class="history" id="cond-history"></div>
+    </div>
+    <div class="card" id="oxy-card">
+      <h3>💧 Oxygène</h3>
+      <p class="value" id="oxy-value">-- mg/L</p>
+      <div class="history" id="oxy-history"></div>
+    </div>
+  </div>
+
+  <script src="subscriber.js"></script>
+</body>
+</html>
