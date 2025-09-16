@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard & Calibration</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg,#1e1e2f,#2c2c44);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      background: rgba(30,30,50,0.95);
+      margin-top: 30px;
+      padding: 30px;
+      border-radius: 20px;
+      width: 95%;
+      max-width: 1000px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+    }
+    h1 {
+      text-align: center;
+      color: #00fff7;
+      margin-bottom: 20px;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .tabs button {
+      background: #00fff7;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: #1e1e2f;
+      font-weight: bold;
+    }
+    .tabs button.active {
+      background: #00cfcf;
+    }
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+    /* Reprise des styles du Dashboard */
+    .data { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:15px; margin-bottom:20px; }
+    .data div { background: rgba(255,255,255,0.05); padding:20px; border-radius:15px; text-align:center; }
+    .data div h2 { margin:0 0 10px 0; color:#00fff7; font-size:1.1em; }
+    .data div span { font-size:1.5em; font-weight:bold; display:block; }
+    #messages { border-radius:15px; padding:10px; max-height:300px; overflow-y:auto; background: rgba(255,255,255,0.05); }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { padding:8px 10px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.2); }
+    th { background: rgba(0,255,255,0.1); color:#00fff7; }
+    tr:nth-child(even) { background: rgba(0,255,255,0.05); }
+    .flex-buttons { display:flex; gap:10px; margin-top:15px; }
+    button.reset { padding:12px; flex:1; border:none; border-radius:12px; font-size:1em; font-weight:bold; cursor:pointer; }
+    button.red { background:#ff4444; color:#fff; }
+    button.red:hover { background:#cc0000; }
+    button.orange { background:#ffaa00; color:#1e1e2f; }
+    button.orange:hover { background:#ff8800; }
+
+    /* Reprise des styles Calibration */
+    .sensor { margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+    .sensor button { margin-top: 10px; width: 100%; padding: 10px; background-color: #00fff7; color: #1e1e2f; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+    .sensor button:hover { background-color: #00cfcf; }
+    #status, #statusAdmin { text-align: center; margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📡 Dashboard & Calibration</h1>
+
+    <!-- Onglets -->
+    <div class="tabs">
+      <button class="active" onclick="switchTab('dashboard')">Dashboard</button>
+      <button onclick="switchTab('calibration')">Calibration</button>
+    </div>
+
+    <!-- Section Dashboard -->
+    <div id="dashboard" class="section active">
+      <div id="status">Connexion en cours...</div>
+      <div class="data">
+        <div><h2>Température</h2><span id="temp">-- °C</span></div>
+        <div><h2>OPR</h2><span id="opr">--</span></div>
+        <div><h2>pH</h2><span id="ph">--</span></div>
+        <div><h2>Conductivité</h2><span id="cond">--</span></div>
+        <div><h2>Oxygène</h2><span id="oxy">--</span></div>
+      </div>
+      <div id="messages">
+        <table>
+          <thead>
+            <tr>
+              <th>Horodatage</th>
+              <th>Temp (°C)</th>
+              <th>OPR</th>
+              <th>pH</th>
+              <th>Cond (μS/cm)</th>
+              <th>Oxy (mg/L)</th>
+            </tr>
+          </thead>
+          <tbody id="messagesBody"></tbody>
+        </table>
+      </div>
+      <div class="flex-buttons">
+        <button class="reset red" onclick="resetOffsets()">🔄 Reset toutes les capteurs</button>
+        <button class="reset orange" onclick="clearHistory()">🗑️ Effacer l'historique</button>
+      </div>
+    </div>
+
+    <!-- Section Calibration -->
+    <div id="calibration" class="section">
+      <div class="sensor">
+        <label>Température : <span id="currentTemp">--</span> °C</label>
+        <button onclick="calibrate('coefTemp')">Tare Température</button>
+      </div>
+
+      <div class="sensor">
+        <label>OPR : <span id="currentOPR">--</span></label>
+        <button onclick="calibrate('coefOPR')">Tare OPR</button>
+      </div>
+
+      <div class="sensor">
+        <label>pH : <span id="currentPH">--</span>pH</label>
+        <button onclick="calibrate('coefPH')">Tare pH</button>
+      </div>
+
+      <div class="sensor">
+        <label>Conductivité : <span id="currentCond"></span>μS/cm</label>
+        <button onclick="calibrate('coefCond')">Tare Conductivité</button>
+      </div>
+
+      <div class="sensor">
+        <label>Oxygène : <span id="currentOxy"></span>mg/L</label>
+        <button onclick="calibrate('coefOxy')">Tare Oxygène</button>
+      </div>
+
+      <div id="statusAdmin">Connexion au broker en cours...</div>
+    </div>
+  </div>
+
+<script>
+/* ===== CONFIG MQTT ===== */
+const broker = "ws://192.168.1.155:3001";
+const client = mqtt.connect(broker, { username: "jeremy", password: "dotmetheass" });
+
+/* ===== VARIABLES ===== */
+let history = [];
+let currentValues = { temperature:0, opr:0, ph:0, conductivite:0, oxygene:0 };
+let offsets = { coefTemp:0, coefOPR:0, coefPH:0, coefCond:0, coefOxy:0 };
+
+
+/* ===== DOM ===== */
+const statusDiv = document.getElementById("status");
+const statusAdminDiv = document.getElementById("statusAdmin");
+const tempDiv = document.getElementById("temp");
+const oprDiv = document.getElementById("opr");
+const phDiv = document.getElementById("ph");
+const condDiv = document.getElementById("cond");
+const oxyDiv = document.getElementById("oxy");
+const messagesBody = document.getElementById("messagesBody");
+
+/* ===== SWITCH ENTRE DASHBOARD / CALIBRATION ===== */
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+  document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
+
+  document.getElementById(tab).classList.add('active');
+  document.querySelector(`.tabs button[onclick="switchTab('${tab}')"]`).classList.add('active');
+}
+
+/* ===== MQTT EVENTS ===== */
+client.on("connect", () => {
+  statusDiv.innerText = "✅ Connecté au broker MQTT";
+  statusDiv.style.color = "#44bd32";
+
+  statusAdminDiv.innerText = "✅ Connecté au broker MQTT";
+  statusAdminDiv.style.color = "#44bd32";
+
+  client.subscribe("capteurs/history");
+  client.subscribe("capteurs/offsets");
+  client.subscribe("capteurs/mesures");
+  client.subscribe("capteurs/clear");
+});
+
+client.on("message", (topic, message) => {
+  try {
+    const data = JSON.parse(message.toString());
+
+    if (topic === "capteurs/history") {
+      history = data;
+      messagesBody.innerHTML = "";
+      history.forEach(displayMessage);
+    }
+
+    if (topic === "capteurs/offsets") {
+      offsets = data;
+      statusAdminDiv.innerText = "ℹ️ Offsets chargés depuis le broker";
+    }
+
+    if (topic === "capteurs/mesures") {
+      currentValues = data;
+      // Mise à jour Dashboard
+      displayMessage(data);
+      // Mise à jour Calibration
+      updateCalibrationDisplay();
+      history.push(data);
+      client.publish("capteurs/history", JSON.stringify(history), { retain: true });
+    }
+
+    if (topic === "capteurs/clear") {
+      history = [];
+      messagesBody.innerHTML = "";
+    }
+
+  } catch(e) {
+    console.error(e);
+  }
+});
+
+/* ===== FONCTIONS DASHBOARD ===== */
+function displayMessage(data) {
+  const tempCal = (data.temperature - offsets.coefTemp).toFixed(2);
+  const oprCal  = (data.opr - offsets.coefOPR).toFixed(2);
+  const phCal   = (data.ph - offsets.coefPH).toFixed(2);
+  const condCal = (data.conductivite - offsets.coefCond).toFixed(2);
+  const oxyCal  = (data.oxygene - offsets.coefOxy).toFixed(2);
+
+  tempDiv.innerText = tempCal + " °C";
+  oprDiv.innerText  = oprCal;
+  phDiv.innerText   = phCal;
+  condDiv.innerText = condCal + " μS/cm";
+  oxyDiv.innerText  = oxyCal + " mg/L";
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${data.timestamp || new Date().toLocaleTimeString()}</td>
+                  <td>${tempCal} °C</td>
+                  <td>${oprCal}</td>
+                  <td>${phCal}</td>
+                  <td>${condCal} μS/cm</td>
+                  <td>${oxyCal} mg/L</td>`;
+  messagesBody.appendChild(tr);
+  messagesBody.parentElement.scrollTop = messagesBody.parentElement.scrollHeight;
+}
+
+function resetOffsets() {
+  offsets = { coefTemp:0, coefOPR:0, coefPH:0, coefCond:0, coefOxy:0 };
+  client.publish("capteurs/offsets", JSON.stringify(offsets), { retain: true });
+  alert("🔄 Toutes les tares ont été réinitialisées !");
+}
+
+function clearHistory() {
+  if(confirm("⚠️ Voulez-vous vraiment effacer tout l'historique ?")) {
+    client.publish("capteurs/clear", JSON.stringify({clear:true}));
+  }
+}
+
+/* ===== FONCTIONS CALIBRATION ===== */
+function updateCalibrationDisplay() {
+  document.getElementById("currentTemp").innerText = (currentValues.temperature - offsets.coefTemp).toFixed(2);
+  document.getElementById("currentOPR").innerText  = (currentValues.opr - offsets.coefOPR).toFixed(2);
+  document.getElementById("currentPH").innerText   = (currentValues.ph - offsets.coefPH).toFixed(2);
+  document.getElementById("currentCond").innerText = (currentValues.conductivite - offsets.coefCond).toFixed(2);
+  document.getElementById("currentOxy").innerText  = (currentValues.oxygene - offsets.coefOxy).toFixed(2);
+}
+
+function calibrate(sensor) {
+  if(sensor === "coefTemp") offsets.coefTemp = currentValues.temperature;
+  if(sensor === "coefOPR")  offsets.coefOPR  = currentValues.opr;
+  if(sensor === "coefPH")   offsets.coefPH   = currentValues.ph;
+  if(sensor === "coefCond") offsets.coefCond = currentValues.conductivite;
+  if(sensor === "coefOxy")  offsets.coefOxy  = currentValues.oxygene;
+
+  client.publish("capteurs/offsets", JSON.stringify(offsets), { retain: true });
+  statusAdminDiv.innerText = "📡 Tare appliquée pour " + sensor;
+}
+</script>
+</body>
+</html>
